@@ -14,10 +14,6 @@ public class LogTool : MonoBehaviour
     void Start()
     {
         Application.logMessageReceived += Application_logMessageReceived;
-        for (int i = 0; i < 10; i++)
-        {
-            Debug.LogError("TobeyChao");
-        }
     }
 
     private void Application_logMessageReceived(string condition, string stackTrace, LogType type)
