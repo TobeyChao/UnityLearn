@@ -75,10 +75,10 @@ public class CircleLayout : UIBehaviour
     // 计算各个物体的位置
     public void CalculateElementsPosition()
     {
-        float spaceDegree = m_ChildForceExpand ? DEGREE / m_RectChildren.Count : m_SpacingDegree;
+        m_SpacingDegree = m_ChildForceExpand ? DEGREE / m_RectChildren.Count : m_SpacingDegree;
         for (int i = 0; i < m_RectChildren.Count; i++)
         {
-            float radians = (i * spaceDegree + offsetDegree) * Mathf.Deg2Rad;
+            float radians = (i * m_SpacingDegree + offsetDegree) * Mathf.Deg2Rad;
             var newPos = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians)) * m_ChildLengthToCenter;
             m_RectChildren[i].anchoredPosition = newPos;
         }

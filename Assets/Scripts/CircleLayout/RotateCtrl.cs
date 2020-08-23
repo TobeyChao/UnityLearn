@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class RotateCtrl : MonoBehaviour
 {
@@ -26,6 +27,7 @@ public class RotateCtrl : MonoBehaviour
     public void ResetCircle()
     {
         targetDegree = 0;
+        degree = 0;
         state = 1;
         speedScale = 20;
         playing = false;
