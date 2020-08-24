@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class RotateCtrl : MonoBehaviour
 {
-    public float speedScaleOrigin = 20;
+    public float speedScaleOrigin = 200;
     public float speedScale = 1;
     public float degree = 0;
     public float targetDegree = 0;
@@ -46,7 +46,7 @@ public class RotateCtrl : MonoBehaviour
         // 判断增减
         if (playing)
         {
-            degree = degree + Time.fixedDeltaTime * speedScale;
+            degree = degree + Time.deltaTime * speedScale;
             transform.rotation = Quaternion.Euler(new Vector3(0, 0, degree));
         }
     }

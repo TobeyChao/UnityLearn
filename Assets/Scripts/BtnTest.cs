@@ -28,6 +28,7 @@ public class BtnTest : MonoBehaviour
         {
             dragOperations[i].onDrag = OnImageDrag;
             dragOperations[i].onBeginDrag = OnImageBeginDrag;
+            dragOperations[i].onEndDrag = OnImageEndDrag;
         }
     }
 
@@ -56,7 +57,30 @@ public class BtnTest : MonoBehaviour
         var vec1 = beginPoint;
         var vec2 = pointerEventData.position - new Vector2(centerGameObject.transform.position.x, centerGameObject.transform.position.y);
         var degreeDelta = Mathf.Rad2Deg * Mathf.Acos(Vector2.Dot(vec1, vec2) / (vec1.magnitude * vec2.magnitude));
+        if ((vec1.x * vec2.y - vec1.y * vec2.x) < 0)
+        {
+            degreeDelta = -degreeDelta;
+        }
         rotateTest.PlayCircle(startDegree + degreeDelta, false);
+    }
+
+    void OnImageEndDrag(GameObject gameObject, PointerEventData pointerEventData)
+    {
+        float[] degreeTo = new float[6];
+        var min = float.MaxValue;
+        var minIndex = -1;
+        var absTargetDegree = Mathf.Abs(rotateTest.targetDegree);
+        for (int i = 0; i < 6; i++)
+        {
+            degreeTo[i] = Mathf.Abs(i * 60 - absTargetDegree);
+            if (degreeTo[i] < min)
+            {
+                min = degreeTo[i];
+                minIndex = i;
+            }
+        }
+        var targetNewDegree = rotateTest.targetDegree < 0 ? minIndex * -60 : minIndex * 60;
+        rotateTest.PlayCircle(targetNewDegree, false);
     }
 
     void OnImageClicked(GameObject gameObject)
