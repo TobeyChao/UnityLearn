@@ -1,9 +1,5 @@
-// Upgrade NOTE: replaced '_LightMatrix0' with 'unity_WorldToLight'
-// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Forward Rendering
-Shader "UnityShaderLearn/ShaderLearn-15"
+// Shadow
+Shader "UnityShaderLearn/ShaderLearn-16"
 {
 	
 	Properties
@@ -17,7 +13,6 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 	}
 	SubShader
 	{
-		Tags { "RenderType"="Opaque" }
 		pass
 		{
 			Tags
@@ -32,6 +27,7 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 
 			#include "Lighting.cginc"
 			#include "UnityCG.cginc"
+			#include "Autolight.cginc"
 
 			fixed4 _Color;
 			sampler2D _MainTex;
@@ -44,8 +40,8 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 
 			struct a2v
 			{
-				float4 positionL : POSITION;
-				float3 normalL : NORMAL;
+				float4 vertex : POSITION;
+				float3 normal : NORMAL;
 				float4 tangent : TANGENT;
 				float2 texcoord : TEXCOORD0;
 				float2 bump_texcoord : TEXCOORD1;
@@ -53,34 +49,30 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 
 			struct v2f
 			{
-				float4 position : SV_POSITION;
+				float4 pos : SV_POSITION;
 				float3 normalW : NORMAL;
 				float3 biNormalW : BINORMAL;
 				float3 tangentW : TANGENT;
 				float3 positionW : TEXCOORD0;
 				float2 uv : TEXCOORD1;
 				float2 bump_uv : TEXCOORD2;
-				float3 TtoW0 : TEXCOORD3;
-				float3 TtoW1 : TEXCOORD4;
-				float3 TtoW2 : TEXCOORD5;
+				SHADOW_COORDS(3)
 			};
 
-			v2f vert(a2v input)
+			v2f vert(a2v v)
 			{
-				v2f outPut;
-				outPut.position = UnityObjectToClipPos(input.positionL);
-				outPut.positionW = mul(UNITY_MATRIX_M, input.positionL);
-				outPut.normalW = UnityObjectToWorldNormal(input.normalL);
-				outPut.tangentW = UnityObjectToWorldDir(input.tangent.xyz);
-				outPut.biNormalW = cross(outPut.normalW, outPut.tangentW) * input.tangent.w;
+				v2f o;
+				o.pos = UnityObjectToClipPos(v.vertex);
+				o.positionW = mul(UNITY_MATRIX_M, v.vertex);
+				o.normalW = UnityObjectToWorldNormal(v.normal);
+				o.tangentW = UnityObjectToWorldDir(v.tangent.xyz);
+				o.biNormalW = cross(o.normalW, o.tangentW) * v.tangent.w;
 
-				outPut.uv = input.texcoord.xy * _MainTex_ST.xy + _MainTex_ST.zw; //TRANSFORM_TEX(input.texcoord, _MainTex);
-				outPut.bump_uv = input.bump_texcoord.xy * _BumpMap_ST.xy + _BumpMap_ST.zw; //TRANSFORM_TEX(input.texcoord, _MainTex);
+				o.uv = v.texcoord.xy * _MainTex_ST.xy + _MainTex_ST.zw; //TRANSFORM_TEX(v.texcoord, _MainTex);
+				o.bump_uv = v.bump_texcoord.xy * _BumpMap_ST.xy + _BumpMap_ST.zw; //TRANSFORM_TEX(v.texcoord, _MainTex);
 				
-				outPut.TtoW0 = float3(outPut.tangentW.x, outPut.biNormalW.x, outPut.normalW.x);
-				outPut.TtoW1 = float3(outPut.tangentW.y, outPut.biNormalW.y, outPut.normalW.y);
-				outPut.TtoW2 = float3(outPut.tangentW.z, outPut.biNormalW.z, outPut.normalW.z);
-				return outPut;
+				TRANSFER_SHADOW(o);
+				return o;
 			}
 
 			fixed4 frag(v2f input) : SV_TARGET
@@ -109,23 +101,23 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 
 				fixed3 viewDir = normalize(UnityWorldSpaceViewDir(input.positionW.xyz));
 				// Phong
-				//fixed3 reflectLightDir = normalize(reflect(-worldLightDir, worldNormal));
-				//float specularFactor = pow(max(0, dot(reflectLightDir, viewDir)), _Gloss);
+				fixed3 reflectLightDir = normalize(reflect(-worldLightDir, worldNormal));
+				float specularFactor = pow(max(0, dot(reflectLightDir, viewDir)), _Gloss);
 				// Blinn-Phong
-				fixed3 halfDir =  normalize(viewDir + worldLightDir);
-				float specularFactor = pow(max(0, dot(halfDir, worldNormal)), _Gloss);
+				//fixed3 halfDir =  normalize(viewDir + worldLightDir);
+				//float specularFactor = pow(max(0, dot(halfDir, worldNormal)), _Gloss);
 
 				// 高光反向穿透问题
 				//specularFactor *= step(0, dot(worldLightDir, worldNormal));
 				specularFactor *= smoothstep(0, 0.12, dot(worldLightDir, worldNormal));
 				fixed3 specularColor = _LightColor0.rgb * _Specular.rgb * specularFactor;
 				fixed atten = 1.0;
-				fixed3 color = ambientColor + (diffuseColor + specularColor) * atten;
+				fixed shadow = SHADOW_ATTENUATION(input);
+				fixed3 color = ambientColor + (diffuseColor + specularColor) * atten * shadow;
 				return fixed4(color, 1.0f);
 			}
 			ENDCG
 		}
-
 		pass
 		{
 			Tags
@@ -155,7 +147,7 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 
 			struct a2v
 			{
-				float4 positionL : POSITION;
+				float4 vertex : POSITION;
 				float3 normalL : NORMAL;
 				float4 tangent : TANGENT;
 				float2 texcoord : TEXCOORD0;
@@ -164,7 +156,7 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 
 			struct v2f
 			{
-				float4 position : SV_POSITION;
+				float4 pos : SV_POSITION;
 				float3 normalW : NORMAL;
 				float3 biNormalW : BINORMAL;
 				float3 tangentW : TANGENT;
@@ -176,21 +168,22 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 				float3 TtoW2 : TEXCOORD5;
 			};
 
-			v2f vert(a2v input)
+			v2f vert(a2v v)
 			{
 				v2f outPut;
-				outPut.position = UnityObjectToClipPos(input.positionL);
-				outPut.positionW = mul(UNITY_MATRIX_M, input.positionL);
-				outPut.normalW = UnityObjectToWorldNormal(input.normalL);
-				outPut.tangentW = UnityObjectToWorldDir(input.tangent.xyz);
-				outPut.biNormalW = cross(outPut.normalW, outPut.tangentW) * input.tangent.w;
+				outPut.pos = UnityObjectToClipPos(v.vertex);
+				outPut.positionW = mul(UNITY_MATRIX_M, v.vertex);
+				outPut.normalW = UnityObjectToWorldNormal(v.normalL);
+				outPut.tangentW = UnityObjectToWorldDir(v.tangent.xyz);
+				outPut.biNormalW = cross(outPut.normalW, outPut.tangentW) * v.tangent.w;
 
-				outPut.uv = input.texcoord.xy * _MainTex_ST.xy + _MainTex_ST.zw; //TRANSFORM_TEX(input.texcoord, _MainTex);
-				outPut.bump_uv = input.bump_texcoord.xy * _BumpMap_ST.xy + _BumpMap_ST.zw; //TRANSFORM_TEX(input.texcoord, _MainTex);
+				outPut.uv = v.texcoord.xy * _MainTex_ST.xy + _MainTex_ST.zw; //TRANSFORM_TEX(v.texcoord, _MainTex);
+				outPut.bump_uv = v.bump_texcoord.xy * _BumpMap_ST.xy + _BumpMap_ST.zw; //TRANSFORM_TEX(v.texcoord, _MainTex);
 				
 				outPut.TtoW0 = float3(outPut.tangentW.x, outPut.biNormalW.x, outPut.normalW.x);
 				outPut.TtoW1 = float3(outPut.tangentW.y, outPut.biNormalW.y, outPut.normalW.y);
 				outPut.TtoW2 = float3(outPut.tangentW.z, outPut.biNormalW.z, outPut.normalW.z);
+
 				return outPut;
 			}
 
@@ -252,4 +245,5 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 			ENDCG
 		}
 	}
+	Fallback "VertexLit"
 }
