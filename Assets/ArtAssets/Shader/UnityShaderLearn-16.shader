@@ -239,7 +239,7 @@ Shader "UnityShaderLearn/ShaderLearn-16"
 				        fixed atten = 1.0;
 				    #endif
 				#endif
-				fixed3 color = ambientColor + (diffuseColor + specularColor) * atten;
+				fixed3 color = (diffuseColor + specularColor) * atten;
 				return fixed4(color, 1.0f);
 			}
 			ENDCG

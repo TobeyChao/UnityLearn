@@ -10,8 +10,9 @@ Shader "UnityShaderLearn/ShaderLearn-20"
 		pass
 		{
 			Tags
-			{ 
-				"LightMode" = "ForwardBase"
+			{
+				 "RenderType" = "Opaque"
+				 "Queue" = "Geometry"
 			}
 			
 			CGPROGRAM
@@ -53,5 +54,5 @@ Shader "UnityShaderLearn/ShaderLearn-20"
 			ENDCG
 		}
 	}
-	FallBack "Reflective/VertexLit"
+	//FallBack "Reflective/VertexLit"
 }

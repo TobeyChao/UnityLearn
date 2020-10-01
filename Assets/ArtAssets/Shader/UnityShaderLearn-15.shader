@@ -197,7 +197,6 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 			fixed4 frag(v2f input) : SV_TARGET
 			{
 				fixed3 albedo = tex2D(_MainTex, input.uv).rgb * _Color.rgb;
-				fixed3 ambientColor = UNITY_LIGHTMODEL_AMBIENT.rgb * albedo;
 				
     			float3 bump = UnpackNormal(tex2D(_BumpMap, input.bump_uv));
 				bump.xy *= _BumpScale;
@@ -246,7 +245,7 @@ Shader "UnityShaderLearn/ShaderLearn-15"
 				        fixed atten = 1.0;
 				    #endif
 				#endif
-				fixed3 color = ambientColor + (diffuseColor + specularColor) * atten;
+				fixed3 color = (diffuseColor + specularColor) * atten;
 				return fixed4(color, 1.0f);
 			}
 			ENDCG

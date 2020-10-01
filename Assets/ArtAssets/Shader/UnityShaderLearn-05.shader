@@ -10,7 +10,7 @@ Shader "UnityShaderLearn/ShaderLearn-05"
 		pass
 		{
 			Tags
-			{ 
+			{
 				"LightMode" = "ForwardBase"
 			}
 			
