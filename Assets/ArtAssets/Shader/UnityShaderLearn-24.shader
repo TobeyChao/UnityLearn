@@ -1,21 +1,32 @@
-// Vert Anim
-Shader "UnityShaderLearn/ShaderLearn-22"
+// Texture Anim
+Shader "UnityShaderLearn/ShaderLearn-24"
 {
 	Properties
 	{
-		_Color ("Color", Color) = (1.0, 1.0, 1.0, 1.0)
-		_ReflectColor ("Reflect Color", Color) = (1.0, 1.0, 1.0, 1.0)
-		_ReflectAmount ("Reflect Amount", Range(0, 1)) = 1
-		_Cubemap ("Reflection Cubemap", Cube) = "_Skybox" {}
+		_BaseLayer ("BaseLayer", 2D) = "white" {}
+		_FrontLayer ("FrontLayer", 2D) = "white" {}
+		_ScrollX ("BaseLayer Scroll Speed", Float) = 1.0
+		_Scroll2X ("FrontLayer Scroll2 Speed", Float) = 1.0
+		_Multiplier ("Multiplier", Float) = 1
 	}
 	SubShader
 	{
+		Tags { "RenderType"="Opaque" "Queue"="Geometry"}
+		/*
+		Tags
+		{
+			"Queue" = "Transparent"
+			"IgnoreProjector" = "True"
+			"RenderType" = "Transparent"
+		}*/
 		pass
 		{
 			Tags
 			{ 
 				"LightMode" = "ForwardBase"
 			}
+			//ZWrite Off
+			//Blend SrcAlpha OneMinusSrcAlpha
 			
 			CGPROGRAM
 			#pragma multi_compile_fwdbase
@@ -26,52 +37,46 @@ Shader "UnityShaderLearn/ShaderLearn-22"
 			#include "UnityCG.cginc"
 			#include "Autolight.cginc"
 
-			fixed4 _Color;
-			fixed4 _ReflectColor;
-            fixed _ReflectAmount;
-			samplerCUBE _Cubemap;
+			sampler2D _BaseLayer;
+			float4 _BaseLayer_ST;
+			sampler2D _FrontLayer;
+			float4 _FrontLayer_ST;
+			float _ScrollX;
+			float _Scroll2X;
+			float _Multiplier;
 
 			struct a2v
 			{
 				float4 vertex : POSITION;
-				float3 normal : NORMAL;
+				float4 texcoord : TEXCOORD0;
 			};
 
 			struct v2f
 			{
 				float4 pos : SV_POSITION;
-				float3 normalW : NORMAL;
-				float3 positionW : TEXCOORD0;
-				SHADOW_COORDS(1)
+				float2 base_uv : TEXCOORD0;
+				float2 front_uv : TEXCOORD1;
 			};
 
 			v2f vert(a2v v)
 			{
 				v2f o;
 				o.pos = UnityObjectToClipPos(v.vertex);
-				o.positionW = mul(UNITY_MATRIX_M, v.vertex);
-				o.normalW = UnityObjectToWorldNormal(v.normal);
-				TRANSFER_SHADOW(o);
+				o.base_uv = TRANSFORM_TEX(v.texcoord, _BaseLayer) + frac(float2(_ScrollX, 0.0) * _Time.y);
+				o.front_uv = TRANSFORM_TEX(v.texcoord, _FrontLayer) + frac(float2(_Scroll2X, 0.0) * _Time.y);
 				return o;
 			}
 
 			fixed4 frag(v2f input) : SV_TARGET
 			{
-				fixed3 worldNormal = normalize(input.normalW);
-				fixed3 worldLightDir = normalize(_WorldSpaceLightPos0.xyz);
-				fixed3 viewDir = normalize(UnityWorldSpaceViewDir(input.positionW.xyz));
-				fixed3 ambientColor = UNITY_LIGHTMODEL_AMBIENT.xyz;
-				float diffuseFactor = saturate(dot(worldLightDir, worldNormal));
-				//float diffuseFactor = dot(worldLightDir, worldNormal) * 0.5f + 0.5f;
-				fixed3 diffuseColor = _LightColor0.rgb * _Color.rgb * diffuseFactor;
-				fixed3 worldRefl = reflect(-UnityWorldSpaceViewDir(input.positionW.xyz), input.normalW);
-				fixed3 reflectionColor = texCUBE(_Cubemap, worldRefl).rgb * _ReflectColor.rgb;
-				UNITY_LIGHT_ATTENUATION(atten, input, input.positionW);
-				fixed3 color = ambientColor + lerp(diffuseColor, reflectionColor, _ReflectAmount) * atten;
-				return fixed4(color, 1.0f);
+				fixed4 base_color = tex2D(_BaseLayer, input.base_uv);
+				fixed4 front_color = tex2D(_FrontLayer, input.front_uv);
+				fixed4 color = lerp(base_color, front_color, front_color.a);
+				color.rgb *= _Multiplier;
+				return color;
 			}
 			ENDCG
 		}
 	}
-	FallBack "Reflective/VertexLit"
+	FallBack "Transparent/VertexLit"
 }

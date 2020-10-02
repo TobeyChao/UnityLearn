@@ -1,21 +1,30 @@
 // Texture Anim
-Shader "UnityShaderLearn/ShaderLearn-22"
+Shader "UnityShaderLearn/ShaderLearn-23"
 {
 	Properties
 	{
 		_Color ("Color", Color) = (1.0, 1.0, 1.0, 1.0)
-		_ReflectColor ("Reflect Color", Color) = (1.0, 1.0, 1.0, 1.0)
-		_ReflectAmount ("Reflect Amount", Range(0, 1)) = 1
-		_Cubemap ("Reflection Cubemap", Cube) = "_Skybox" {}
+		_MainTex ("Image Sequence", 2D) = "white" {}
+		_HorizontalAmount ("Horizontal Amount", Float) = 4
+		_VerticalAmount ("Vertical Amount", Float) = 4
+		_Speed ("Speed", Range(0, 100)) = 30
 	}
 	SubShader
 	{
+		Tags
+		{
+			"Queue" = "Transparent"
+			"IgnoreProjector" = "True"
+			"RenderType" = "Transparent"
+		}
 		pass
 		{
 			Tags
 			{ 
 				"LightMode" = "ForwardBase"
 			}
+			ZWrite Off
+			Blend SrcAlpha OneMinusSrcAlpha
 			
 			CGPROGRAM
 			#pragma multi_compile_fwdbase
@@ -27,51 +36,50 @@ Shader "UnityShaderLearn/ShaderLearn-22"
 			#include "Autolight.cginc"
 
 			fixed4 _Color;
-			fixed4 _ReflectColor;
-            fixed _ReflectAmount;
-			samplerCUBE _Cubemap;
+			sampler2D _MainTex;
+			float4 _MainTex_ST;
+			float _HorizontalAmount;
+			float _VerticalAmount;
+			float _Speed;
 
 			struct a2v
 			{
 				float4 vertex : POSITION;
-				float3 normal : NORMAL;
+				float2 texcoord : TEXCOORD;
 			};
 
 			struct v2f
 			{
 				float4 pos : SV_POSITION;
-				float3 normalW : NORMAL;
-				float3 positionW : TEXCOORD0;
-				SHADOW_COORDS(1)
+				float2 uv : TEXCOORD0;
 			};
 
 			v2f vert(a2v v)
 			{
 				v2f o;
 				o.pos = UnityObjectToClipPos(v.vertex);
-				o.positionW = mul(UNITY_MATRIX_M, v.vertex);
-				o.normalW = UnityObjectToWorldNormal(v.normal);
-				TRANSFER_SHADOW(o);
+				o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
 				return o;
 			}
 
 			fixed4 frag(v2f input) : SV_TARGET
 			{
-				fixed3 worldNormal = normalize(input.normalW);
-				fixed3 worldLightDir = normalize(_WorldSpaceLightPos0.xyz);
-				fixed3 viewDir = normalize(UnityWorldSpaceViewDir(input.positionW.xyz));
-				fixed3 ambientColor = UNITY_LIGHTMODEL_AMBIENT.xyz;
-				float diffuseFactor = saturate(dot(worldLightDir, worldNormal));
-				//float diffuseFactor = dot(worldLightDir, worldNormal) * 0.5f + 0.5f;
-				fixed3 diffuseColor = _LightColor0.rgb * _Color.rgb * diffuseFactor;
-				fixed3 worldRefl = reflect(-UnityWorldSpaceViewDir(input.positionW.xyz), input.normalW);
-				fixed3 reflectionColor = texCUBE(_Cubemap, worldRefl).rgb * _ReflectColor.rgb;
-				UNITY_LIGHT_ATTENUATION(atten, input, input.positionW);
-				fixed3 color = ambientColor + lerp(diffuseColor, reflectionColor, _ReflectAmount) * atten;
-				return fixed4(color, 1.0f);
+				float frame = floor(_Time.y * _Speed);
+				// 在第几行
+				float row = floor(frame / _HorizontalAmount);
+				// 在第几列
+				float column = frame - row * _HorizontalAmount;
+				// 放缩u(v)到1/_HorizontalAmount(1/_VerticalAmount)
+				half2 uv = float2(input.uv.x / _HorizontalAmount, input.uv.y / _VerticalAmount);
+				// 加上行列的偏移
+				uv.x += column / _HorizontalAmount;
+				uv.y -= row / _VerticalAmount;
+				fixed4 color = tex2D(_MainTex, uv);
+				color.rgb *= _Color;
+				return color;
 			}
 			ENDCG
 		}
 	}
-	FallBack "Reflective/VertexLit"
+	FallBack "Transparent/VertexLit"
 }
