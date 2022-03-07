@@ -551,8 +551,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mItem: {fileID: 1086796414}
-  mWidth: 50
-  mHeight: 30
+  mWidth: 60
+  mHeight: 40
+  mDrawType: 0
 --- !u!114 &1566330651
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -571,10 +572,10 @@ MonoBehaviour:
     m_Top: 5
     m_Bottom: 0
   m_ChildAlignment: 4
-  m_StartCorner: 0
+  m_StartCorner: 2
   m_StartAxis: 0
-  m_CellSize: {x: 20, y: 20}
-  m_Spacing: {x: 5, y: 5}
+  m_CellSize: {x: 30, y: 30}
+  m_Spacing: {x: 2, y: 2}
   m_Constraint: 1
   m_ConstraintCount: 60
 --- !u!1 &1635249539
