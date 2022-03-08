@@ -65,6 +65,7 @@ public class DrawLineTest : MonoBehaviour
                 case DRAW_TYPE.MiddleBresenham:
                     break;
                 case DRAW_TYPE.Bresenham:
+                    BresenhamDrawLine(_x1, _y1, _x2, _y2);
                     break;
                 default:
                     break;
@@ -133,6 +134,52 @@ public class DrawLineTest : MonoBehaviour
             x += incrementX;
             y += incrementY;
             gameObjects[(int)(y + 0.5f)][(int)(x + 0.5f)].SetColor(Color.red);
+        }
+    }
+
+    private void BresenhamDrawLine(int x1, int y1, int x2, int y2)
+    {
+        int dx = x2 - x1;
+        int dy = y2 - y1;
+
+        int sx = dx > 0 ? 1 : -1;
+        int sy = dy > 0 ? 1 : -1;
+
+        bool flag = Math.Abs(dy) > Math.Abs(dx);
+
+        int E = flag ? -sy * dy : -sx * dx;
+
+        int absDx = sx * dx;
+        int absDy = sy * dy;
+
+        int x = x1;
+        int y = y1;
+        while (x != x2 || y != y2)
+        {
+            gameObjects[y][x].SetColor(Color.red);
+
+            if (flag)
+            {
+                y += sy;
+
+                E += absDx << 1;
+                if (E > 0)
+                {
+                    x += sx;
+                    E -= absDy << 1;
+                }
+            }
+            else
+            {
+                x += sx;
+
+                E += absDy << 1;
+                if (E > 0)
+                {
+                    y += sy;
+                    E -= absDx << 1;
+                }
+            }
         }
     }
 }

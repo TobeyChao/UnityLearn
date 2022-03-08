@@ -553,7 +553,7 @@ MonoBehaviour:
   mItem: {fileID: 1086796414}
   mWidth: 60
   mHeight: 40
-  mDrawType: 0
+  mDrawType: 2
 --- !u!114 &1566330651
 MonoBehaviour:
   m_ObjectHideFlags: 0
