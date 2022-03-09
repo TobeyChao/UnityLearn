@@ -551,9 +551,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mItem: {fileID: 1086796414}
-  mWidth: 60
+  mWidth: 70
   mHeight: 40
   mDrawType: 2
+  mDrawCount: 100000
 --- !u!114 &1566330651
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -577,7 +578,7 @@ MonoBehaviour:
   m_CellSize: {x: 30, y: 30}
   m_Spacing: {x: 2, y: 2}
   m_Constraint: 1
-  m_ConstraintCount: 60
+  m_ConstraintCount: 70
 --- !u!1 &1635249539
 GameObject:
   m_ObjectHideFlags: 0

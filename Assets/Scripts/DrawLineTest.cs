@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,6 +26,10 @@ public class DrawLineTest : MonoBehaviour
 
     public DRAW_TYPE mDrawType;
 
+    private DrawLine drawLine;
+
+    public int mDrawCount = 100;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -44,6 +49,11 @@ public class DrawLineTest : MonoBehaviour
         }
 
         mItem.gameObject.SetActive(false);
+
+        drawLine = new DrawLine((x, y) =>
+        {
+            gameObjects[y][x].SetColor(Color.red);
+        });
     }
 
     void OnClick(int row, int col)
@@ -57,19 +67,29 @@ public class DrawLineTest : MonoBehaviour
         {
             _x2 = col;
             _y2 = row;
+
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             switch (mDrawType)
             {
                 case DRAW_TYPE.DDA:
-                    DDADrawLine(_x1, _y1, _x2, _y2);
+                    for (int i = 0; i < mDrawCount; i++)
+                        drawLine.DDADrawLine(_x1, _y1, _x2, _y2);
                     break;
                 case DRAW_TYPE.MiddleBresenham:
+                    for (int i = 0; i < mDrawCount; i++)
+                        drawLine.MiddleBresenhamDrawLine(_x1, _y1, _x2, _y2);
                     break;
                 case DRAW_TYPE.Bresenham:
-                    BresenhamDrawLine(_x1, _y1, _x2, _y2);
+                    for (int i = 0; i < mDrawCount; i++)
+                        drawLine.BresenhamDrawLine(_x1, _y1, _x2, _y2);
                     break;
                 default:
                     break;
             }
+            sw.Stop();
+            long times = sw.ElapsedMilliseconds;
+            UnityEngine.Debug.Log(mDrawType + " Cost:" + times + "ms");
         }
         else
         {
@@ -77,7 +97,7 @@ public class DrawLineTest : MonoBehaviour
             _y1 = row;
             Clear();
         }
-        Debug.Log("OnClick:(" + col + ", " + row + ")");
+        UnityEngine.Debug.Log("OnClick:(" + col + ", " + row + ")");
         gameObjects[row][col].SetColor(Color.green);
     }
 
@@ -92,95 +112,6 @@ public class DrawLineTest : MonoBehaviour
         }
         _x2 = -1;
         _y2 = -1;
-    }
-
-    /// <summary>
-    /// DDA
-    /// 优点：
-    ///     增量算法（每一步都是上一步的x,y值增加一个量）
-    ///     直观、易实现
-    /// 缺点：
-    ///     需要进行浮点数运算；
-    ///     产生一个像素要做两次加法和两次取整运算；
-    ///     运行效率低；
-    ///     取整运算不利于硬件实现。
-    /// </summary>
-    /// <param name="x1"></param>
-    /// <param name="y1"></param>
-    /// <param name="x2"></param>
-    /// <param name="y2"></param>
-    private void DDADrawLine(int x1, int y1, int x2, int y2)
-    {
-        int step;
-        int dx = x2 - x1;
-        int dy = y2 - y1;
-        if (Math.Abs(dy) > Math.Abs(dx))
-        {
-            step = Math.Abs(y2 - y1);
-        }
-        else
-        {
-            step = Math.Abs(x2 - x1);
-        }
-
-        float incrementX = (float)dx / step;
-        float incrementY = (float)dy / step;
-
-        float x = x1;
-        float y = y1;
-
-        for (int i = 0; i < step; i++)
-        {
-            x += incrementX;
-            y += incrementY;
-            gameObjects[(int)(y + 0.5f)][(int)(x + 0.5f)].SetColor(Color.red);
-        }
-    }
-
-    private void BresenhamDrawLine(int x1, int y1, int x2, int y2)
-    {
-        int dx = x2 - x1;
-        int dy = y2 - y1;
-
-        int sx = dx > 0 ? 1 : -1;
-        int sy = dy > 0 ? 1 : -1;
-
-        bool flag = Math.Abs(dy) > Math.Abs(dx);
-
-        int E = flag ? -sy * dy : -sx * dx;
-
-        int absDx = sx * dx;
-        int absDy = sy * dy;
-
-        int x = x1;
-        int y = y1;
-        while (x != x2 || y != y2)
-        {
-            gameObjects[y][x].SetColor(Color.red);
-
-            if (flag)
-            {
-                y += sy;
-
-                E += absDx << 1;
-                if (E > 0)
-                {
-                    x += sx;
-                    E -= absDy << 1;
-                }
-            }
-            else
-            {
-                x += sx;
-
-                E += absDy << 1;
-                if (E > 0)
-                {
-                    y += sy;
-                    E -= absDx << 1;
-                }
-            }
-        }
     }
 }
 
